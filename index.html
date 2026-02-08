@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nanashi Privacy AI | Node v1.0</title>
+    <style>
+        :root {
+            --bg-color: #050507;
+            --glass-bg: rgba(20, 20, 30, 0.7);
+            --neon-blue: #00f3ff;
+            --neon-purple: #bc13fe;
+            --neon-green: #00ff9d;
+            --neon-gold: #ffd700;
+            --text-color: #e0e0e0;
+            --text-dim: #888;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: row;
+        }
+
+        .sidebar {
+            width: 80px;
+            background: rgba(0,0,0,0.95);
+            border-right: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+        }
+
+        .icon-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            background: #1a1a1a;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 22px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .icon-btn.active, .icon-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 243, 255, 0.2), rgba(188, 19, 254, 0.2));
+            color: var(--neon-blue);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.4);
+            border: 1px solid var(--neon-blue);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            background: radial-gradient(circle at 50% 50%, #111119 0%, #000000 100%);
+            overflow-y: auto;
+        }
+
+        .view-section {
+            display: none;
+        }
+
+        .view-section.active-view {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+        }
+
+        .status-ring {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            border: 6px solid #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.6s;
+        }
+
+        .status-ring.active {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 60px rgba(0, 243, 255, 0.5);
+            animation: pulse 3s infinite;
+        }
+
+        .status-text {
+            font-size: 32px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .status-text.active {
+            color: var(--neon-blue);
+            text-shadow: 0 0 20px var(--neon-blue);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .power-btn {
+            margin-top: 40px;
+            padding: 20px 60px;
+            background: #222;
+            color: white;
+            border: 1px solid #444;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            transition: 0.4s;
+        }
+
+        .power-btn.active {
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+            box-shadow: 0 0 30px rgba(188, 19, 254, 0.6);
+            border: none;
+        }
+
+        .stats-container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat-box {
+            flex: 1;
+            background: rgba(0,0,0,0.4);
+            border-radius: 15px;
+            padding: 25px;
+            border-left: 4px solid #444;
+        }
+
+        .stat-box.earn { border-color: var(--neon-green); }
+        .stat-box.gpu { border-color: var(--neon-purple); }
+        .stat-box.nodes { border-color: var(--neon-gold); }
+
+        .stat-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+        .stat-value { font-size: 28px; font-weight: bold; font-family: monospace; margin: 8px 0; }
+
+        .progress-bar {
+            height: 10px;
+            background: #222;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-green), var(--neon-gold));
+            transition: width 1s ease-in-out;
+        }
+
+        .terminal-container {
+            background: #08080a;
+            border: 1px solid #333;
+            border-radius: 15px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #0f0;
+            overflow-y: auto;
+            max-height: 250px;
+        }
+
+        .log-entry { margin-bottom: 6px; opacity: 0.9; animation: fadeInLog 0.5s; }
+
+        @keyframes fadeInLog {
+            from { opacity: 0; }
+            to { opacity: 0.9; }
+        }
+
+        .chat-window {
+            flex: 1;
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            padding: 25px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            border: 1px solid #333;
+            min-height: 400px;
+        }
+
+        .msg { padding: 15px 20px; border-radius: 15px; margin-bottom: 12px; max-width: 85%; word-wrap: break-word; font-size: 15px; animation: fadeInMsg 0.5s; }
+
+        .msg.user { background: rgba(0, 243, 255, 0.15); border: 1px solid var(--neon-blue); align-self: flex-end; margin-left: auto; }
+        .msg.ai { background: rgba(188, 19, 254, 0.15); border: 1px solid var(--neon-purple); color: var(--neon-blue); }
+
+        @keyframes fadeInMsg {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; height: 70px; flex-direction: row; justify-content: space-around; border-bottom: 1px solid #333; padding-top: 0; }
+            .main-content { padding-bottom: 90px; }
+            .stats-container { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <button class="icon-btn active" data-target="view-dashboard">⚡</button>
+        <button class="icon-btn" data-target="view-chat">💬</button>
+        <button class="icon-btn" data-target="view-security">🛡️</button>
+        <button class="icon-btn" data-target="view-settings">⚙️</button>
+    </div>
+
+    <div class="main-content">
+
+        <!-- DASHBOARD -->
+        <div id="view-dashboard" class="view-section active-view">
+            <div class="card">
+                <div class="status-ring" id="statusRing">
+                    <div class="status-text" id="statusText">PRÊT</div>
+                </div>
+                <button class="power-btn" id="powerBtn">ACTIVER NANASHI</button>
+            </div>
+
+            <div class="stats-container">
+                <div class="stat-box earn">
+                    <div class="stat-label">GAINS $NANA</div>
+                    <div class="stat-value" id="coinBalance">0.0000</div>
+                </div>
+                <div class="stat-box gpu">
+                    <div class="stat-label">CHARGE GPU</div>
+                    <div class="stat-value" id="gpuLoad">0 %</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="gpuProgress" style="width: 0%;"></div>
+                    </div>
+                </div>
+                <div class="stat-box nodes">
+                    <div class="stat-label">NŒUDS ACTIFS</div>
+                    <div class="stat-value">1,337</div>
+                </div>
+            </div>
+
+            <div class="terminal-container" id="terminal">
+                <div class="log-entry">> Nanashi Node v1.0 initialisé</div>
+                <div class="log-entry">> Privacy zero-trust activé</div>
+            </div>
+        </div>
+
+        <!-- CHAT -->
+        <div id="view-chat" class="view-section">
+            <div class="card">
+                <h3>Nanashi Local – Chiffrement E2E</h3>
+                <div class="chat-window" id="chatWindow">
+                    <div class="msg ai">Connexion sécurisée établie 🔒<br>Je suis Nanashi Local – intelligence souveraine.<br>Split inference prêt. Comment puis-je vous aider ? 🚀</div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chatInput" class="chat-input" placeholder="Message sécurisé...">
+                    <button class="send-btn" id="sendBtn">Envoyer</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECURITY -->
+        <div id="view-security" class="view-section">
+            <div class="card">
+                <h3>Audit de Sécurité</h3>
+                <p>Privacy zero-trust activée</p>
+            </div>
+        </div>
+
+        <!-- SETTINGS -->
+        <div id="view-settings" class="view-section">
+            <div class="card">
+                <h3>Configuration Node</h3>
+                <p>Worker ID: WK-2026-MAC</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Navigation
+        document.querySelectorAll('.icon-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.icon-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active-view'));
+                document.getElementById(btn.dataset.target).classList.add('active-view');
+            });
+        });
+
+        // Mining animation
+        let mining = false;
+        let balance = 0;
+        let gpuLoad = 0;
+        let interval, logInterval;
+
+        const logs = [
+            "Tâche split inference reçue...",
+            "Fragment bruité validé",
+            "Contribution PoI scorée +0.87",
+            "Synchronisation hive...",
+            "Récompense $NANA ajoutée"
+        ];
+
+        document.getElementById('powerBtn').addEventListener('click', () => {
+            mining = !mining;
+            const btn = document.getElementById('powerBtn');
+            const ring = document.getElementById('statusRing');
+            const text = document.getElementById('statusText');
+
+            if (mining) {
+                btn.textContent = "DÉSACTIVER";
+                btn.classList.add('active');
+                ring.classList.add('active');
+                text.textContent = "ACTIF";
+                text.classList.add('active');
+
+                interval = setInterval(() => {
+                    balance += Math.random() * 0.0002;
+                    gpuLoad = Math.floor(Math.random() * 50 + 30);
+                    document.getElementById('coinBalance').textContent = balance.toFixed(6);
+                    document.getElementById('gpuLoad').textContent = gpuLoad + " %";
+                    document.getElementById('gpuProgress').style.width = gpuLoad + "%";
+                }, 1500);
+
+                logInterval = setInterval(() => {
+                    const log = document.createElement('div');
+                    log.className = 'log-entry';
+                    log.textContent = "> " + logs[Math.floor(Math.random() * logs.length)];
+                    document.getElementById('terminal').appendChild(log);
+                    document.getElementById('terminal').scrollTop = document.getElementById('terminal').scrollHeight;
+                }, 3000);
+
+            } else {
+                btn.textContent = "ACTIVER NANASHI";
+                btn.classList.remove('active');
+                ring.classList.remove('active');
+                text.textContent = "PRÊT";
+                text.classList.remove('active');
+                document.getElementById('gpuLoad').textContent = "0 %";
+                document.getElementById('gpuProgress').style.width = "0%";
+                clearInterval(interval);
+                clearInterval(logInterval);
+            }
+        });
+
+        // Chat simulation
+        document.getElementById('sendBtn').addEventListener('click', () => {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const msg = document.createElement('div');
+            msg.className = 'msg user';
+            msg.textContent = text;
+            document.getElementById('chatWindow').appendChild(msg);
+            input.value = '';
+
+            setTimeout(() => {
+                const aiMsg = document.createElement('div');
+                aiMsg.className = 'msg ai';
+                aiMsg.innerHTML = "Reçu chiffré. Analyse en cours... Privacy garantie 🔒";
+                document.getElementById('chatWindow').appendChild(aiMsg);
+                document.getElementById('chatWindow').scrollTop = document.getElementById('chatWindow').scrollHeight;
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
